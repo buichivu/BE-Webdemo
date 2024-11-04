@@ -64,30 +64,28 @@ const loginWithGoogle = async (req: any, res: any) => {
           }),
         },
       });
-    }else{
+    } else {
       const salt = await bcrypt.genSalt(10);
-    const hashpassword = await bcrypt.hash(generatorRandomText(6), salt);
-    console.log(hashpassword);
-    body.password = hashpassword;
+      const hashpassword = await bcrypt.hash(generatorRandomText(6), salt);
+      console.log(hashpassword);
+      body.password = hashpassword;
 
-    const newUser: any = new UserModel(body);
-    await newUser.save();
-    delete newUser._doc.password;
+      const newUser: any = new UserModel(body);
+      await newUser.save();
+      delete newUser._doc.password;
 
-    res.status(200).json({
-      message: "Register",
-      data: {
-        ...newUser._doc,
-        token: await getAccessToken({
-          _id: newUser._id,
-          email: newUser.email,
-          rule: 1,
-        }),
-      },
-    });
+      res.status(200).json({
+        message: "Register",
+        data: {
+          ...newUser._doc,
+          token: await getAccessToken({
+            _id: newUser._id,
+            email: newUser.email,
+            rule: 1,
+          }),
+        },
+      });
     }
-
-    
   } catch (error: any) {
     res.status(404).json({
       message: error.message,
@@ -127,4 +125,28 @@ const login = async (req: any, res: any) => {
   }
 };
 
-export { register, login, loginWithGoogle };
+const refreshToken = async (req: any, res: any) => {
+	const { id } = req.query;
+  console.log(id)
+	try {
+		const user = await UserModel.findById(id);
+		if (!user) {
+			throw new Error('User not found');
+		}
+		const token = await getAccessToken({
+			_id: id,
+			email: user.email as string,
+			rule: user.rule,
+		});
+		res.status(200).json({
+			message: 'fafa',
+			data: token,
+		});
+	} catch (error: any) {
+		res.status(404).json({
+			message: error.message,
+		});
+	}
+};
+
+export { register, login, loginWithGoogle, refreshToken };
